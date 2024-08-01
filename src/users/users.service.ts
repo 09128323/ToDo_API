@@ -59,8 +59,4 @@ export class UsersService {
             relations: ['roles'],
         });
     }
-
-    // async updateUser(user: User): Promise<User> {
-    //     return this.userRepository.save(user);
-    // }
 }
