@@ -16,48 +16,91 @@ export class AuthService {
         private userService: UsersService,
         private jwtService: JwtService
     ) {}
+
     async login(userDto: CreateUserDto) {
-        const user = await this.validateUser(userDto);
-        return this.generateToken(user);
+        try {
+            const user = await this.validateUser(userDto);
+            return this.generateToken(user);
+        } catch (error) {
+            throw new HttpException(
+                'Ошибка входа в систему',
+                HttpStatus.UNAUTHORIZED
+            );
+        }
     }
 
     async registration(userDto: CreateUserDto) {
-        const candidate = await this.userService.getUserByEmail(userDto.email);
+        try {
+            const candidate = await this.userService.getUserByEmail(
+                userDto.email
+            );
 
-        if (candidate) {
+            if (candidate) {
+                throw new HttpException(
+                    'Пользователь с таким email существует',
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+
+            const hashPassword = await bcrypt.hash(userDto.password, 5);
+            const user = await this.userService.createUser({
+                ...userDto,
+                password: hashPassword,
+            });
+
+            return this.generateToken(user);
+        } catch (error) {
             throw new HttpException(
-                'Пользователь с таким email существует',
-                HttpStatus.BAD_REQUEST
+                'Ошибка регистрации',
+                HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
-
-        const hashPassword = await bcrypt.hash(userDto.password, 5);
-        const user = await this.userService.createUser({
-            ...userDto,
-            password: hashPassword,
-        });
-
-        return this.generateToken(user);
     }
 
     private async generateToken(user: User) {
-        const payload = { email: user.email, id: user.id, roles: user.roles };
-        return {
-            token: this.jwtService.sign(payload),
-        };
+        try {
+            const payload = {
+                email: user.email,
+                id: user.id,
+                roles: user.roles,
+            };
+            return {
+                token: this.jwtService.sign(payload),
+            };
+        } catch (error) {
+            throw new HttpException(
+                'Ошибка генерации токена',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     private async validateUser(userDto: CreateUserDto) {
-        const user = await this.userService.getUserByEmail(userDto.email);
-        const passwordEquals = await bcrypt.compare(
-            userDto.password,
-            user.password
-        );
-        if (user && passwordEquals) {
-            return user;
+        try {
+            const user = await this.userService.getUserByEmail(userDto.email);
+
+            if (!user) {
+                throw new UnauthorizedException(
+                    'Некорректный email или пароль'
+                );
+            }
+
+            const passwordEquals = await bcrypt.compare(
+                userDto.password,
+                user.password
+            );
+            if (passwordEquals) {
+                return user;
+            } else {
+                throw new UnauthorizedException(
+                    'Некорректный email или пароль'
+                );
+            }
+        } catch (error) {
+            throw new HttpException(
+                'Ошибка проверки пользователя',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
-        throw new UnauthorizedException({
-            message: 'Некорректный email или пароль',
-        });
     }
 }

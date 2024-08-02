@@ -10,6 +10,7 @@ import { Role } from 'src/roles/entities/roles.entity';
 import { UserRoles } from 'src/roles/entities/user-roles.entity';
 import { Project } from 'src/projects/entities/projects.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator';
 
 @Entity()
 export class User {
@@ -18,10 +19,14 @@ export class User {
     id: number;
 
     @ApiProperty({ example: 'user@gmail.com', description: 'Почтовый адрес' })
+    @IsEmail()
+    @IsNotEmpty()
     @Column({ unique: true })
     email: string;
 
     @ApiProperty({ example: 'user12345', description: 'Пароль' })
+    @IsString()
+    @Length(4, 50)
     @Column()
     password: string;
 

@@ -2,6 +2,7 @@ import {
     Injectable,
     NotFoundException,
     UnauthorizedException,
+    InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/users.entity';
@@ -30,7 +31,7 @@ export class TasksService {
         });
 
         if (!column) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException('Нет доступа к данной колонке');
         }
 
         // Получение максимального значения позиции
@@ -40,7 +41,7 @@ export class TasksService {
             .where('task.columnId = :columnId', { columnId })
             .getRawOne();
 
-        const maxPosition = result.max || 0;
+        const maxPosition = result?.max || 0;
 
         // Создание новой задачи
         const task = this.tasksRepository.create({
@@ -49,8 +50,14 @@ export class TasksService {
             position: maxPosition + 1,
         });
 
-        await this.tasksRepository.save(task);
-        return task;
+        try {
+            await this.tasksRepository.save(task);
+            return task;
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Ошибка при создании задачи'
+            );
+        }
     }
 
     async getTasks(columnId: number, user: User): Promise<Task[]> {
@@ -59,10 +66,16 @@ export class TasksService {
         });
 
         if (!column) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException('Нет доступа к данной колонке');
         }
 
-        return this.tasksRepository.find({ where: { column } });
+        try {
+            return await this.tasksRepository.find({ where: { column } });
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Ошибка при получении задач'
+            );
+        }
     }
 
     async getTaskById(
@@ -78,7 +91,7 @@ export class TasksService {
         });
 
         if (!task) {
-            throw new UnauthorizedException();
+            throw new NotFoundException('Задача не найдена');
         }
 
         return task;
@@ -92,13 +105,16 @@ export class TasksService {
     ): Promise<Task> {
         const task = await this.getTaskById(columnId, taskId, user);
 
-        if (!task) {
-            throw new NotFoundException();
-        }
-
         Object.assign(task, updateTaskDto);
-        await this.tasksRepository.save(task);
-        return task;
+
+        try {
+            await this.tasksRepository.save(task);
+            return task;
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Ошибка при обновлении задачи'
+            );
+        }
     }
 
     async deleteTask(
@@ -108,10 +124,12 @@ export class TasksService {
     ): Promise<void> {
         const task = await this.getTaskById(columnId, taskId, user);
 
-        if (!task) {
-            throw new NotFoundException();
+        try {
+            await this.tasksRepository.remove(task);
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Ошибка при удалении задачи'
+            );
         }
-
-        await this.tasksRepository.remove(task);
     }
 }

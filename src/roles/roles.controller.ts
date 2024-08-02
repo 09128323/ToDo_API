@@ -1,35 +1,98 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+    Controller,
+    Post,
+    Get,
+    Param,
+    Body,
+    Put,
+    Delete,
+    UseGuards,
+    Req,
+    HttpException,
+    HttpStatus,
+} from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
 import {
     ApiTags,
     ApiOperation,
     ApiResponse,
-    ApiBody,
+    ApiBearerAuth,
     ApiParam,
+    ApiBody,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Role } from './entities/roles.entity';
 
 @ApiTags('Роли')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('roles')
 export class RolesController {
-    constructor(private rolesService: RolesService) {}
+    constructor(private readonly rolesService: RolesService) {}
 
     @Post()
     @ApiOperation({ summary: 'Создать новую роль' })
     @ApiResponse({ status: 201, description: 'Роль создана', type: Role })
-    @ApiResponse({ status: 400, description: 'Некорректные данные' })
+    @ApiResponse({ status: 401, description: 'Неавторизован' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
     @ApiBody({ type: CreateRoleDto })
-    createRole(@Body() dto: CreateRoleDto): Promise<Role> {
-        return this.rolesService.createRole(dto);
+    async create(
+        @Body() createRoleDto: CreateRoleDto,
+        @Req() req
+    ): Promise<Role> {
+        return this.rolesService.createRole(createRoleDto);
     }
 
-    @Get('/:value')
-    @ApiOperation({ summary: 'Получить роль по значению' })
-    @ApiResponse({ status: 200, description: 'Роль найдена', type: Role })
+    @Get()
+    @ApiOperation({ summary: 'Получить все роли' })
+    @ApiResponse({ status: 200, description: 'Список ролей', type: [Role] })
+    @ApiResponse({ status: 401, description: 'Неавторизован' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+    async findAll(@Req() req): Promise<Role[]> {
+        return this.rolesService.getRoles();
+    }
+
+    @Get(':roleId')
+    @ApiOperation({ summary: 'Получить роль по ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Информация о роли',
+        type: Role,
+    })
+    @ApiResponse({ status: 401, description: 'Неавторизован' })
     @ApiResponse({ status: 404, description: 'Роль не найдена' })
-    @ApiParam({ name: 'value', description: 'Значение роли' })
-    getRoleByValue(@Param('value') value: string): Promise<Role> {
-        return this.rolesService.getRoleByValue(value);
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+    @ApiParam({ name: 'roleId', description: 'ID роли' })
+    async findOne(@Param('roleId') roleId: number, @Req() req): Promise<Role> {
+        return this.rolesService.getRoleById(roleId);
+    }
+
+    @Put(':roleId')
+    @ApiOperation({ summary: 'Обновить роль' })
+    @ApiResponse({ status: 200, description: 'Роль обновлена', type: Role })
+    @ApiResponse({ status: 401, description: 'Неавторизован' })
+    @ApiResponse({ status: 404, description: 'Роль не найдена' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+    @ApiParam({ name: 'roleId', description: 'ID роли' })
+    @ApiBody({ type: UpdateRoleDto })
+    async update(
+        @Param('roleId') roleId: number,
+        @Body() updateRoleDto: UpdateRoleDto,
+        @Req() req
+    ): Promise<Role> {
+        return this.rolesService.updateRole(roleId, updateRoleDto);
+    }
+
+    @Delete(':roleId')
+    @ApiOperation({ summary: 'Удалить роль' })
+    @ApiResponse({ status: 200, description: 'Роль удалена' })
+    @ApiResponse({ status: 401, description: 'Неавторизован' })
+    @ApiResponse({ status: 404, description: 'Роль не найдена' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+    @ApiParam({ name: 'roleId', description: 'ID роли' })
+    async remove(@Param('roleId') roleId: number, @Req() req): Promise<void> {
+        return this.rolesService.deleteRole(roleId);
     }
 }

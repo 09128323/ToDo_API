@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -8,55 +8,96 @@ import { AddRoleDto } from './dto/add-role.dto';
 
 @Injectable()
 export class UsersService {
+    private readonly logger = new Logger(UsersService.name);
+
     constructor(
         @InjectRepository(User) private userRepository: Repository<User>,
         private rolesService: RolesService
     ) {}
 
     async createUser(dto: CreateUserDto): Promise<User> {
-        const user = this.userRepository.create({
-            email: dto.email,
-            password: dto.password,
-        });
+        try {
+            const user = this.userRepository.create({
+                email: dto.email,
+                password: dto.password,
+            });
 
-        return await this.userRepository.save(user);
+            return await this.userRepository.save(user);
+        } catch (error) {
+            this.logger.error('Ошибка при создании пользователя', error.stack);
+            throw new HttpException(
+                'Ошибка при создании пользователя',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     async getAllUsers(): Promise<User[]> {
-        return this.userRepository.find({ relations: ['roles'] });
+        try {
+            return await this.userRepository.find({ relations: ['roles'] });
+        } catch (error) {
+            this.logger.error(
+                'Ошибка при получении всех пользователей',
+                error.stack
+            );
+            throw new HttpException(
+                'Ошибка при получении всех пользователей',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     async addRole(dto: AddRoleDto): Promise<AddRoleDto> {
-        // Найти пользователя по ID
-        const user = await this.userRepository.findOne({
-            where: { id: dto.userId },
-            relations: ['roles'],
-        });
-        // Найти роль по значению
-        const role = await this.rolesService.getRoleByValue(dto.value);
+        try {
+            const user = await this.userRepository.findOne({
+                where: { id: dto.userId },
+                relations: ['roles'],
+            });
 
-        if (!user) {
+            if (!user) {
+                throw new HttpException(
+                    'Пользователь не найден',
+                    HttpStatus.NOT_FOUND
+                );
+            }
+
+            const role = await this.rolesService.getRoleByValue(dto.value);
+
+            if (!role) {
+                throw new HttpException(
+                    'Роль не найдена',
+                    HttpStatus.NOT_FOUND
+                );
+            }
+
+            user.roles.push(role);
+            await this.userRepository.save(user);
+
+            return dto;
+        } catch (error) {
+            this.logger.error('Ошибка при добавлении роли пользователю', error);
             throw new HttpException(
-                'Пользователь не найден',
-                HttpStatus.NOT_FOUND
+                'Ошибка при добавлении роли пользователю',
+                HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
-
-        if (!role) {
-            throw new HttpException('Роль не найдена', HttpStatus.NOT_FOUND);
-        }
-
-        // Добавить роль пользователю
-        user.roles.push(role);
-        await this.userRepository.save(user);
-
-        return dto;
     }
 
     async getUserByEmail(email: string): Promise<User> {
-        return this.userRepository.findOne({
-            where: { email },
-            relations: ['roles'],
-        });
+        try {
+            return await this.userRepository.findOne({
+                where: { email },
+                relations: ['roles'],
+            });
+        } catch (error) {
+            this.logger.error(
+                'Ошибка при получении пользователя по email',
+                error
+            );
+            throw new HttpException(
+                'Ошибка при получении пользователя по email',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     }
 }

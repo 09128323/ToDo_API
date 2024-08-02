@@ -8,6 +8,8 @@ import {
     Delete,
     UseGuards,
     Req,
+    HttpException,
+    HttpStatus,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -34,6 +36,7 @@ export class TasksController {
     @ApiOperation({ summary: 'Создать новую задачу' })
     @ApiResponse({ status: 201, description: 'Задача создана', type: Task })
     @ApiResponse({ status: 401, description: 'Неавторизован' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
     @ApiParam({ name: 'columnId', description: 'ID колонки' })
     @ApiBody({ type: CreateTaskDto })
     async create(
@@ -48,6 +51,7 @@ export class TasksController {
     @ApiOperation({ summary: 'Получить все задачи колонки' })
     @ApiResponse({ status: 200, description: 'Список задач', type: [Task] })
     @ApiResponse({ status: 401, description: 'Неавторизован' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
     @ApiParam({ name: 'columnId', description: 'ID колонки' })
     async findAll(
         @Param('columnId') columnId: number,
@@ -65,6 +69,7 @@ export class TasksController {
     })
     @ApiResponse({ status: 401, description: 'Неавторизован' })
     @ApiResponse({ status: 404, description: 'Задача не найдена' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
     @ApiParam({ name: 'columnId', description: 'ID колонки' })
     @ApiParam({ name: 'taskId', description: 'ID задачи' })
     async findOne(
@@ -80,6 +85,7 @@ export class TasksController {
     @ApiResponse({ status: 200, description: 'Задача обновлена', type: Task })
     @ApiResponse({ status: 401, description: 'Неавторизован' })
     @ApiResponse({ status: 404, description: 'Задача не найдена' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
     @ApiParam({ name: 'columnId', description: 'ID колонки' })
     @ApiParam({ name: 'taskId', description: 'ID задачи' })
     @ApiBody({ type: UpdateTaskDto })
@@ -102,6 +108,7 @@ export class TasksController {
     @ApiResponse({ status: 200, description: 'Задача удалена' })
     @ApiResponse({ status: 401, description: 'Неавторизован' })
     @ApiResponse({ status: 404, description: 'Задача не найдена' })
+    @ApiResponse({ status: 500, description: 'Ошибка сервера' })
     @ApiParam({ name: 'columnId', description: 'ID колонки' })
     @ApiParam({ name: 'taskId', description: 'ID задачи' })
     async remove(
