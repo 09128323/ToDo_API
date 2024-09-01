@@ -4,7 +4,6 @@ import {
     Get,
     Post,
     UseGuards,
-    Query,
     Logger,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -41,7 +40,7 @@ export class UsersController {
     @ApiOperation({ summary: 'Получить пользователя по email' })
     @ApiResponse({ status: 200, type: User })
     @Get()
-    async getUserByEmail(@Query('email') email: string) {
+    async getUserByEmail(@Body('email') email: string) {
         try {
             return await this.usersService.getUserByEmail(email);
         } catch (error) {
