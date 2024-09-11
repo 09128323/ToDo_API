@@ -5,6 +5,7 @@ import {
     Post,
     UseGuards,
     Logger,
+    Delete,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -72,6 +73,18 @@ export class UsersController {
             return await this.usersService.addRole(dto);
         } catch (error) {
             this.logger.error('Ошибка при добавлении роли пользователю', error);
+            throw error;
+        }
+    }
+
+    @ApiOperation({ summary: 'Удалить пользователя по email' })
+    @ApiResponse({ status: 200, type: User })
+    @Delete('/deleteUserByEmail')
+    async deleteUserByEmail(@Body('email') email: string) {
+        try {
+            return this.usersService.deleteUserByEmail(email);
+        } catch (error) {
+            this.logger.error('Ошибка при удалении пользователя', error);
             throw error;
         }
     }
