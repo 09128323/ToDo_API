@@ -24,10 +24,13 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Role } from './entities/roles.entity';
+import { Roles } from 'src/auth/roles-auth.decorator';
+
 
 @ApiTags('Роли')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Roles('ADMIN')
 @Controller('roles')
 export class RolesController {
     constructor(private readonly rolesService: RolesService) {}
