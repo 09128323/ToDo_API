@@ -1,4 +1,11 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+    HttpException,
+    HttpStatus,
+    Injectable,
+    InternalServerErrorException,
+    Logger,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -100,4 +107,22 @@ export class UsersService {
             );
         }
     }
+    
+    async deleteUserByEmail(email: string): Promise<{ message: string }> {
+        try {
+          const user = await this.userRepository.findOneBy({ email });
+          if (!user) {
+            throw new NotFoundException(`Пользователь с email ${email} не найден.`);
+          }
+    
+          await this.userRepository.remove(user);
+          return { message: `Пользователь с email ${email} успешно удалён.` };
+        } catch (error) {
+          if (error instanceof NotFoundException) {
+            throw error;
+          } else {
+            throw new InternalServerErrorException('Ошибка при удалении пользователя.');
+          }
+        }
+      }
 }
