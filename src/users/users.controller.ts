@@ -30,62 +30,35 @@ export class UsersController {
     @ApiResponse({ status: 200, type: User })
     @Post()
     async create(@Body() userDto: CreateUserDto) {
-        try {
-            return await this.usersService.createUser(userDto);
-        } catch (error) {
-            this.logger.error('Ошибка при создании пользователя', error);
-            throw error;
-        }
+        return await this.usersService.createUser(userDto);
     }
 
     @ApiOperation({ summary: 'Получить пользователя по email' })
     @ApiResponse({ status: 200, type: User })
     @Get()
     async getUserByEmail(@Body('email') email: string) {
-        try {
-            return await this.usersService.getUserByEmail(email);
-        } catch (error) {
-            this.logger.error(
-                'Ошибка при получении пользователя по email',
-                error
-            );
-            throw error;
-        }
+        return await this.usersService.getUserByEmail(email);
     }
 
     @ApiOperation({ summary: 'Получить всех пользователей' })
     @ApiResponse({ status: 200, type: [User] })
     @Get('/allUsers')
     async getAllUsers() {
-        try {
-            return await this.usersService.getAllUsers();
-        } catch (error) {
-            this.logger.error('Ошибка при получении всех пользователей', error);
-            throw error;
-        }
+        return await this.usersService.getAllUsers();
     }
 
     @ApiOperation({ summary: 'Добавить роль пользователю' })
     @ApiResponse({ status: 200, type: Role })
     @Post('/role')
     async addRole(@Body() dto: AddRoleDto) {
-        try {
-            return await this.usersService.addRole(dto);
-        } catch (error) {
-            this.logger.error('Ошибка при добавлении роли пользователю', error);
-            throw error;
-        }
+        return await this.usersService.addRole(dto);
     }
 
     @ApiOperation({ summary: 'Удалить пользователя по email' })
     @ApiResponse({ status: 200, type: User })
     @Delete('/deleteUserByEmail')
     async deleteUserByEmail(@Body('email') email: string) {
-        try {
-            return this.usersService.deleteUserByEmail(email);
-        } catch (error) {
-            this.logger.error('Ошибка при удалении пользователя', error);
-            throw error;
-        }
+        return this.usersService.deleteUserByEmail(email);
     }
+    
 }
