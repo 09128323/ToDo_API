@@ -28,7 +28,7 @@ import { Roles } from 'src/auth/roles-auth.decorator';
 
 
 @ApiTags('Роли')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Roles('ADMIN')
 @Controller('roles')

@@ -26,7 +26,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Task } from './entities/tasks.entity';
 
 @ApiTags('Задачи')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('tasks')
 export class TasksController {
